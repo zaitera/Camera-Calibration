@@ -1,17 +1,10 @@
 #!/usr/bin/env python
-
-
+#python 2 and 3 compatibility
 from __future__ import print_function
 
-import numpy as np
-import cv2 as cv
-
-# local modules
-from common import splitfn
+from common import *
 
 # built-in modules
-import os
-
 
 def main():
     import sys
@@ -26,14 +19,14 @@ def main():
         os.mkdir(debug_dir)
     square_size = 1.0
 
-    pattern_size = (8, 6)
+    pattern_size = (6, 8)
     pattern_points = np.zeros((np.prod(pattern_size), 3), np.float32)
     pattern_points[:, :2] = np.indices(pattern_size).T.reshape(-1, 2)
     pattern_points *= square_size
 
     obj_points = []
     img_points = []
-    # TODO: use imquery call to retrieve results
+
     h, w = cv.imread(img_names[0], cv.IMREAD_GRAYSCALE).shape[:2]
 
     def processImage(fn):
@@ -85,6 +78,17 @@ def main():
     print("\nRMS:", rms)
     print("camera matrix:\n", camera_matrix)
     print("distortion coefficients: ", dist_coefs.ravel())
+    #print("objpoints", obj_points)
+
+
+
+    #success, rvecs, tvecs = cv.solvePnP(np.asarray(obj_points), np.asarray(img_points), camera_matrix, dist_coefs, flags=cv.SOLVEPNP_ITERATIVE)
+
+    print("rvecs:", rvecs )
+    print("tvecs:", tvecs )
+
+
+
 
     # undistort the image with the calibration
     print('')
