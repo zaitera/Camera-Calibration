@@ -6,6 +6,7 @@ from common import *
 
 # built-in modules
 
+
 def main():
     import sys
     import getopt
@@ -17,7 +18,7 @@ def main():
     debug_dir = './output/'
     if debug_dir and not os.path.isdir(debug_dir):
         os.mkdir(debug_dir)
-    square_size = 1.0
+    square_size = 3.0
 
     pattern_size = (6, 8)
     pattern_points = np.zeros((np.prod(pattern_size), 3), np.float32)
@@ -83,12 +84,8 @@ def main():
 
 
     #success, rvecs, tvecs = cv.solvePnP(np.asarray(obj_points), np.asarray(img_points), camera_matrix, dist_coefs, flags=cv.SOLVEPNP_ITERATIVE)
-
     print("rvecs:", rvecs )
     print("tvecs:", tvecs )
-
-
-
 
     # undistort the image with the calibration
     print('')
