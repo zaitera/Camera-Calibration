@@ -1,27 +1,23 @@
 #!/usr/bin/env python
-#python 2 and 3 compatibility
-from __future__ import print_function
 
 from common import *
 
-
-def undistort(image, camera_matrix, dist_coefs, outfile):
-        h, w = image[0].shape[:2]
-        newcameramtx, roi = cv.getOptimalNewCameraMatrix(
-            camera_matrix, dist_coefs, (w, h), 1, (w, h))
-
-        dst = cv.undistort(image, camera_matrix,
-                           dist_coefs, None, newcameramtx)
-        # crop and save the image
-        x, y, w, h = roi
-        dst = dst[y:y+h, x:x+w]
-        return dst
+def undistortImage(image, camera_matrix, dist_coefs):
+    h, w = image.shape[:2]
+    dist_coefs = np.array(dist_coefs)
+    newcameramtx, roi = NewtonRaphsonUndistort.getOptimalNewCameraMatrix(
+        camera_matrix, dist_coefs, (w, h), 0)
+    map1, map2 = cv.initUndistortRectifyMap(camera_matrix, dist_coefs, np.eye(3), newcameramtx,
+                                            (w, h), cv.CV_32FC1)
+    image_corr_mine = cv.remap(
+        image, map1, map2, interpolation=cv.INTER_CUBIC)
+    return image_corr_mine
 
 @static_vars(counter=0)
 def calibrate(images):
     square_size = 3.0
     calibrate.counter += 1
-    pattern_size = (6, 8)
+    pattern_size = (8, 6)
     pattern_points = np.zeros((np.prod(pattern_size), 3), np.float32)
     pattern_points[:, :2] = np.indices(pattern_size).T.reshape(-1, 2)
     pattern_points *= square_size
@@ -74,50 +70,71 @@ def calibrate(images):
     print("RMS", rms)
     print('')
     xmlf = XmlFile("distortion_"+str(calibrate.counter)+".xml")
-    xmlf.writeToXml('dist_matrix', camera_matrix)
+    xmlf.writeToXml('matrix', dist_coefs)
     del xmlf
-    xmlf = XmlFile("intrisics_"+str(calibrate.counter)+".xml")
+    xmlf = XmlFile("intrinsics_"+str(calibrate.counter)+".xml")
     xmlf.writeToXml('matrix', camera_matrix)
     del xmlf
     print('Done')
+    return camera_matrix, dist_coefs
 
 def init():
+    print('''Hi, Usage:
+        - after collecting at least 5 images, you can click the character c to initialize the calibration process for that dataset.
+        - To get the undistort windows, the process of calibration needs to be run at least 5 times, clicking c each time.
+        - make sure the c character was clicked, if the program recognized it it'll print a flag of starting the calibration.
+    ''')
     cam_number = int(
         input("Enter the webcam camera number as your system identifies it: "), 10)
     cap = cv.VideoCapture(cam_number)
-    print("here")
-    seconds = 1
+    seconds = float(input("Enter the amount of time between the frames choosed for calibration: "))
     fps = cap.get(cv.CAP_PROP_FPS)  # Gets the frames per second
-    print(fps)
+    print(str(fps)+" FPS")
     multiplier = fps * seconds
-    images = []
+    images = deque(maxlen=5)    
     os.system("mkdir ./output")
     os.system("mkdir ./output/xmls")
+    print("deleting old xml files")
+    os.system("rm ./output/xmls/*.xml")
     cv.namedWindow('Original')
     frameId = 0
-    return cap, seconds, fps, multiplier, images, frameId
+    return cap, multiplier, images, frameId
 
-
-def main(cap, seconds, fps, multiplier, images, frameId):
+def main(cap, multiplier, images, frameId):
+    calibrated = False
     while True:
         # current frame number, rounded b/c sometimes you get frame intervals which aren't integers...this adds a little imprecision but is likely good enough
         frameId += 1
         flag, image = cap.read()
-
-        if ((frameId % multiplier) == 0):
-            images.append(image)
-            print("image collected")
-        if(len(images) >= 5):
-            calibrate(images)
-            images.clear()
         if flag:
-            # The frame is ready and already captured
             cv.imshow('Original', image)
+            if ((cv.waitKey(15) & 0xFF == ord('c')) and (len(images)>=5)):
+                print(CGREEN+"Starting calibration"+CEND)
+                camera_matrix, distortion_matrix = calibrate(list(images))
+                if(calibrate.counter >= 5):
+                    calibrate.counter = 0
+                    calibrated = True
+                    distortion_matrix = averageMatrixCaluclator("distortion")
+                    camera_matrix = averageMatrixCaluclator("intrinsics")
+                    xmlf = XmlFile("distortion_avg"+".xml")
+                    xmlf.writeToXml('matrix', distortion_matrix)
+                    del xmlf
+                    xmlf = XmlFile("intrinsics_avg"+".xml")
+                    xmlf.writeToXml('matrix', camera_matrix)
+                    del xmlf
+                images.clear()
+            if (calibrated):
+                undistored_image = undistortImage(image, camera_matrix, distortion_matrix)
+                cv.imshow('undistored', undistored_image)
+            if ((frameId % multiplier) == 0):
+                images.append(image)
+                print("image collected")
+            # The frame is ready and already captured
         else:
             print("frame is not ready")
             # It is better 1to wait for a while for the next frame to be ready
             cv.waitKey(10)
-        if cv.waitKey(25) == 27:
+        if cv.waitKey(15) == 27:
             cap.release()
             break
 

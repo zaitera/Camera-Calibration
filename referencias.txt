@@ -7,3 +7,4 @@ https://docs.opencv.org/3.1.0/da/d56/classcv_1_1FileStorage.html - referencia de
 https://stackoverflow.com/questions/22704936/reading-every-nth-frame-from-videocapture-in-opencv - pular frames num video opencv
 https://www.programiz.com/python-programming/methods/list/clear - metodo clear das listas de python
 https://stackoverflow.com/questions/279561/what-is-the-python-equivalent-of-static-variables-inside-a-function - criacao de variavel estatica em python
+https://docs.python.org/2/library/collections.html#collections.deque - deque

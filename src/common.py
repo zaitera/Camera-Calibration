@@ -1,12 +1,19 @@
 import os
 import numpy as np
 import cv2 as cv
+from collections import deque
+from calibrationUtils import NewtonRaphsonUndistort
 
+CEND = '\33[0m'
+CBOLD = '\33[1m'
+CRED = '\33[31m'
+CGREEN = '\33[32m'
+CBLUE = '\33[34m'
+    
 def splitfn(fn):
     path, fn = os.path.split(fn)
     name, ext = os.path.splitext(fn)
     return path, name, ext
-
 
 def static_vars(**kwargs):
     def decorate(func):
@@ -14,6 +21,23 @@ def static_vars(**kwargs):
             setattr(func, k, kwargs[k])
         return func
     return decorate
+
+def averageMatrixCaluclator(mat):
+    #mat = distortion or intrinsics
+    import glob
+    path = "./output/xmls/"+mat+"_*.xml"
+    i = 0
+    for filename in glob.glob(path):
+        i += 1
+    xmlfile = XmlFile(mat+"_1"".xml")
+    avg_mat = xmlfile.readFromXml('matrix')
+    for j in range(2,i+1):
+        filename = mat+"_"+str(j)+".xml"
+        xmlfile = XmlFile(filename)
+        avg_mat += xmlfile.readFromXml('matrix')
+    avg_mat /= i
+    del i,j
+    return avg_mat
 
 class XmlFile:
     Name = ""
