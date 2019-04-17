@@ -13,10 +13,6 @@ def undistortImage(image, camera_matrix, dist_coefs):
         image, map1, map2, interpolation=cv.INTER_CUBIC)
     return image_corr_mine
 
-def getExtrinsics(camera_matrix, distortion_matrix):
-    
-    return rvec, tvec
-
 @static_vars(counter=0)
 def calibrate(images):
     square_size = 3.0
@@ -52,7 +48,7 @@ def calibrate(images):
         if not found:
             print('chessboard not found')
             return None
-        print('           %s... OK' % str(num) + '_chess.png')
+        print('%s... OK' % str(num) + '_chess.png written with pattern to /output/')
         return (corners.reshape(-1, 2), pattern_points)
 
 #    chessboards = [processImage(img) for img in images]
@@ -73,7 +69,7 @@ def calibrate(images):
     # undistort the image with the calibration
     print("RMS", rms)
     print('')
-    print("calculating extrinsics")
+    print("Calculating extrinsics")
 
     rvec = np.mean(np.array(rvecs),axis = 0)
     tvec = np.mean(np.array(tvecs), axis=0)
@@ -92,28 +88,6 @@ def calibrate(images):
     print('Done')
     return camera_matrix, dist_coefs
 
-def init():
-    print('''Hi, Usage:
-        - after collecting at least 5 images, you can click the character c to initialize the calibration process for that dataset.
-        - To get the undistort windows, the process of calibration needs to be run at least 5 times, clicking c each time.
-        - make sure the c character was clicked, if the program recognized it it'll print a flag of starting the calibration.
-    ''')
-    cam_number = int(
-        input("Enter the webcam camera number as your system identifies it: "), 10)
-    cap = cv.VideoCapture(cam_number)
-    seconds = float(input("Enter the amount of time between the frames choosed for calibration in seconds (accepts float values): "))
-    fps = cap.get(cv.CAP_PROP_FPS)  # Gets the frames per second
-    print(str(fps)+" FPS")
-    multiplier = fps * seconds
-    images = deque(maxlen=5)    
-    os.system("mkdir ./output")
-    os.system("mkdir ./output/xmls")
-    print("deleting old xml files")
-    os.system("rm ./output/xmls/*.xml")
-    cv.namedWindow('Original')
-    frameId = 0
-    return cap, multiplier, images, frameId
-
 def main(cap, multiplier, images, frameId):
     calibrated = False
     while True:
@@ -130,21 +104,8 @@ def main(cap, multiplier, images, frameId):
                     calibrated = True
                     distortion_matrix = averageMatrixCaluclator("distortion")
                     camera_matrix = averageMatrixCaluclator("intrinsics")
-                    xmlf = XmlFile("avgdistortion.xml")
-                    xmlf.writeToXml('matrix', distortion_matrix)
-                    del xmlf
-                    xmlf = XmlFile("avgintrinsics.xml")
-                    xmlf.writeToXml('matrix', camera_matrix)
-                    del xmlf
-                    xmlf=XmlFile("stddistortion.xml")
-                    xmlf.writeToXml('matrix', stdMatrixCaluclator("distortion"))
-                    del xmlf
-                    xmlf=XmlFile("stdintrinsics.xml")
-                    xmlf.writeToXml('matrix', stdMatrixCaluclator("intrinsics"))
-                    del xmlf
-                    xmlf = XmlFile("stdextrinsics.xml")
-                    xmlf.writeToXml('matrix', stdMatrixCaluclator("extrinsics"))
-                    del xmlf
+                    writeXmlsAvgs(distortion_matrix, camera_matrix)
+                    writeXmlStds()
                 images.clear()
             if (calibrated and frameId % 15 == 0): #update undistort image every 500ms (because camera is 30 fps)
                 undistored_image = undistortImage(image, camera_matrix, distortion_matrix)

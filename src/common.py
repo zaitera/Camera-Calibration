@@ -10,6 +10,29 @@ CRED = '\33[31m'
 CGREEN = '\33[32m'
 CBLUE = '\33[34m'
 
+def init():
+    print('''Hi, Usage:
+        - after collecting at least 5 images, you can click the character c to initialize the calibration process for that dataset.
+        - To get the undistort windows, the process of calibration needs to be run at least 5 times, clicking c each time.
+        - make sure the c character was clicked, if the program recognized it it'll print a flag of starting the calibration.
+    ''')
+    cam_number = int(
+        input("Enter the webcam camera number as your system identifies it: "), 10)
+    cap = cv.VideoCapture(cam_number)
+    seconds = float(input(
+        "Enter the amount of time between the frames choosed for calibration in seconds (accepts float values): "))
+    fps = cap.get(cv.CAP_PROP_FPS)  # Gets the frames per second
+    print(str(fps)+" FPS")
+    multiplier = fps * seconds
+    images = deque(maxlen=5)
+    os.system("mkdir ./output")
+    os.system("mkdir ./output/xmls")
+    print("deleting old xml files")
+    os.system("rm ./output/xmls/*.xml")
+    cv.namedWindow('Original')
+    frameId = 0
+    return cap, multiplier, images, frameId
+
 def splitfn(fn):
     path, fn = os.path.split(fn)
     name, ext = os.path.splitext(fn)
@@ -39,6 +62,25 @@ def averageMatrixCaluclator(mat):
     del i,j
     return avg_mat
 
+def writeXmlStds():
+    xmlf=XmlFile("stddistortion.xml")
+    xmlf.writeToXml('matrix', stdMatrixCaluclator("distortion"))
+
+    xmlf=XmlFile("stdintrinsics.xml")
+    xmlf.writeToXml('matrix', stdMatrixCaluclator("intrinsics"))
+
+    xmlf = XmlFile("stdextrinsics.xml")
+    xmlf.writeToXml('matrix', stdMatrixCaluclator("extrinsics"))
+    del xmlf
+
+
+def writeXmlsAvgs(distortion_matrix, camera_matrix):
+    xmlf = XmlFile("avgdistortion.xml")
+    xmlf.writeToXml('matrix', distortion_matrix)
+    del xmlf
+    xmlf = XmlFile("avgintrinsics.xml")
+    xmlf.writeToXml('matrix', camera_matrix)
+    del xmlf
 
 def stdMatrixCaluclator(mat):
     #mat = distortion or intrinsics
