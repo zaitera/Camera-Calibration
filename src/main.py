@@ -180,11 +180,13 @@ def main(cap, multiplier, images, frameId):
                 dist = np.sqrt(aux[0]**2 + aux[1]**2)
                 pointr1.clear()
                 pointr2.clear()
-                print(CBOLD+CRED+"Size calculated on raw = {}".format(dist)+CEND)
+                print(CBOLD+CBLUE+"Size calculated on raw = {}".format(dist)+CEND)
             if ((frameId % multiplier) == 0):
                 images.append(image)
+                print("image collected - ", sep=' ', end='', flush=True)
                 if(len(images)>=5):
-                    print("5 images collected successfully press c to calibrate.")
+                    print("")
+                    print("5 images are available press c to calibrate.")
             # The frame is ready and already captured
         else:
             print("frame is not ready")
