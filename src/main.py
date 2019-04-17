@@ -87,8 +87,55 @@ def calibrate(images):
     print('Done')
     return camera_matrix, dist_coefs
 
+def realDistanceCalculator(camera_matrix,extrinsics,x,y):
+    pseudo_inv_extrinsics = np.linalg.pinv(extrinsics)
+    intrinsics_inv = np.linalg.inv(camera_matrix)
+    pixels_matrix = np.array((x,y,1))
+    ans = np.matmul(intrinsics_inv,pixels_matrix)
+    ans = np.matmul(pseudo_inv_extrinsics,ans)
+    ans /= ans[-1] 
+    return ans
+
+
+def getMouseClicksOriginal(event, x, y, flags, params):
+    global pointo1
+    global pointo2
+    
+    if event == cv.EVENT_LBUTTONDOWN:
+        if pointo1 and pointo2:
+            pointo1 = []
+            pointo2 = []
+        print('Point clicked on original: {}, {}'.format(x, y))
+        if not pointo1:
+            pointo1 = [x, y]
+        else:
+            pointo2 = [x, y]
+            dx = pointo1[0] - pointo2[0]
+            dy = pointo1[1] - pointo2[1]
+            dist = np.sqrt(dx**2 + dy**2)
+            print('Distance in pixels on original = {0:2.2f}'.format(dist))
+
+def getMouseClicksUndistorted(event, x, y, flags, params):
+    global pointd1
+    global pointd2
+    if event == cv.EVENT_LBUTTONDOWN:
+        if pointd1 and pointd2:
+            pointd1 = []
+            pointd2 = []
+        print('Point clicked on undistorted: {}, {}'.format(x, y))
+        if not pointd1:
+            pointd1 = [x, y]
+        else:
+            pointd2 = [x, y]
+            dx = pointd1[0] - pointd2[0]
+            dy = pointd1[1] - pointd2[1]
+            dist = np.sqrt(dx**2 + dy**2)
+            print('Distance on undistorted= {0:2.2f}'.format(dist))
+
 def main(cap, multiplier, images, frameId):
     calibrated = False
+    cv.namedWindow('Original')
+    cv.setMouseCallback('Original', getMouseClicksOriginal)
     while True:
         # current frame number, rounded b/c sometimes you get frame intervals which aren't integers...this adds a little imprecision but is likely good enough
         frameId += 1
@@ -101,14 +148,30 @@ def main(cap, multiplier, images, frameId):
                 if(calibrate.counter >= 5):
                     calibrate.counter = 0
                     calibrated = True
+                    cv.namedWindow('undistorted')
+                    cv.setMouseCallback(
+                        'undistorted', getMouseClicksUndistorted)
                     distortion_matrix = averageMatrixCaluclator("distortion")
                     camera_matrix = averageMatrixCaluclator("intrinsics")
-                    writeXmlsAvgs(distortion_matrix, camera_matrix)
+                    extrinsics_matrix = averageMatrixCaluclator("extrinsics")
+                    writeXmlsAvgs(distortion_matrix,
+                                  camera_matrix, extrinsics_matrix)
                     writeXmlStds()
                 images.clear()
             if (calibrated and frameId % 15 == 0): #update undistort image every 500ms (because camera is 30 fps)
-                undistored_image = undistortImage(image, camera_matrix, distortion_matrix)
-                cv.imshow('undistored', undistored_image)
+                undistorted_image = undistortImage(image, camera_matrix, distortion_matrix)
+                if pointd1 and pointd2 :
+                    cv.line(undistorted_image, tuple(pointd1),
+                            tuple(pointd2), (255, 255, 255), 2)
+                    p1 = realDistanceCalculator(camera_matrix, extrinsics_matrix, pointd1[0],pointd1[1])
+                    p2 = realDistanceCalculator(camera_matrix, extrinsics_matrix, pointd2[0], pointd2[1])
+                    aux = p2 - p1
+                    print("test")
+                    print(aux)
+                cv.imshow('undistorted', undistorted_image)
+            if(calibrated and pointo1 and pointo2):
+                cv.line(image, tuple(pointo1), tuple(
+                    pointo2), (255, 255, 255), 2)
             if ((frameId % multiplier) == 0):
                 images.append(image)
                 print("image collected")

@@ -9,7 +9,10 @@ CBOLD = '\33[1m'
 CRED = '\33[31m'
 CGREEN = '\33[32m'
 CBLUE = '\33[34m'
-
+pointo1 = []
+pointo2 = []
+pointd1 = []
+pointd2 = []
 def init():
     print('''Hi, Usage:
         - after collecting at least 5 images, you can click the character c to initialize the calibration process for that dataset.
@@ -29,7 +32,6 @@ def init():
     os.system("mkdir ./output/xmls")
     print("deleting old xml files")
     os.system("rm ./output/xmls/*.xml")
-    cv.namedWindow('Original')
     frameId = 0
     return cap, multiplier, images, frameId
 
@@ -74,12 +76,15 @@ def writeXmlStds():
     del xmlf
 
 
-def writeXmlsAvgs(distortion_matrix, camera_matrix):
+def writeXmlsAvgs(distortion_matrix, camera_matrix, extrinsics_matrix):
     xmlf = XmlFile("avgdistortion.xml")
     xmlf.writeToXml('matrix', distortion_matrix)
-    del xmlf
+
     xmlf = XmlFile("avgintrinsics.xml")
     xmlf.writeToXml('matrix', camera_matrix)
+
+    xmlf = XmlFile("avgextrinsics.xml")
+    xmlf.writeToXml('matrix', extrinsics_matrix)
     del xmlf
 
 def stdMatrixCaluclator(mat):
