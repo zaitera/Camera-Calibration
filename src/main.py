@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 from common import *
 
 def undistortImage(image, camera_matrix, dist_coefs):
@@ -15,7 +14,7 @@ def undistortImage(image, camera_matrix, dist_coefs):
 
 @static_vars(counter=0)
 def calibrate(images):
-    square_size = 3.0
+    square_size = 30.0
     calibrate.counter += 1
     pattern_size = (8, 6)
     pattern_points = np.zeros((np.prod(pattern_size), 3), np.float32)
