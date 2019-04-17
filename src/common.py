@@ -49,13 +49,13 @@ def stdMatrixCaluclator(mat):
         i += 1
     xmlfile = XmlFile(mat+"_1"".xml")
     all_matrix = xmlfile.readFromXml('matrix')
-
     for j in range(2, i+1):
         filename = mat+"_"+str(j)+".xml"
         xmlfile = XmlFile(filename)
         all_matrix = np.dstack((all_matrix, xmlfile.readFromXml('matrix')))
     del i, j
     return np.std(all_matrix, 2, ddof=1)
+
 
 class XmlFile:
     Name = ""

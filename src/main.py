@@ -130,11 +130,20 @@ def main(cap, multiplier, images, frameId):
                     calibrated = True
                     distortion_matrix = averageMatrixCaluclator("distortion")
                     camera_matrix = averageMatrixCaluclator("intrinsics")
-                    xmlf = XmlFile("distortion_avg.xml")
+                    xmlf = XmlFile("avgdistortion.xml")
                     xmlf.writeToXml('matrix', distortion_matrix)
                     del xmlf
-                    xmlf = XmlFile("intrinsics_avg.xml")
+                    xmlf = XmlFile("avgintrinsics.xml")
                     xmlf.writeToXml('matrix', camera_matrix)
+                    del xmlf
+                    xmlf=XmlFile("stddistortion.xml")
+                    xmlf.writeToXml('matrix', stdMatrixCaluclator("distortion"))
+                    del xmlf
+                    xmlf=XmlFile("stdintrinsics.xml")
+                    xmlf.writeToXml('matrix', stdMatrixCaluclator("intrinsics"))
+                    del xmlf
+                    xmlf = XmlFile("stdextrinsics.xml")
+                    xmlf.writeToXml('matrix', stdMatrixCaluclator("extrinsics"))
                     del xmlf
                 images.clear()
             if (calibrated and frameId % 15 == 0): #update undistort image every 500ms (because camera is 30 fps)
