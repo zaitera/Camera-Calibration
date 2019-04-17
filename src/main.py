@@ -97,23 +97,23 @@ def realDistanceCalculator(camera_matrix,extrinsics,x,y):
     return ans
 
 
-def getMouseClicksOriginal(event, x, y, flags, params):
-    global pointo1
-    global pointo2
+def getMouseClicksRaw(event, x, y, flags, params):
+    global pointr1
+    global pointr2
     
     if event == cv.EVENT_LBUTTONDOWN:
-        if pointo1 and pointo2:
-            pointo1 = []
-            pointo2 = []
-        print('Point clicked on original: {}, {}'.format(x, y))
-        if not pointo1:
-            pointo1 = [x, y]
+        if pointr1 and pointr2:
+            pointr1 = []
+            pointr2 = []
+        print('Point clicked on Raw: {}, {}'.format(x, y))
+        if not pointr1:
+            pointr1 = [x, y]
         else:
-            pointo2 = [x, y]
-            dx = pointo1[0] - pointo2[0]
-            dy = pointo1[1] - pointo2[1]
+            pointr2 = [x, y]
+            dx = pointr1[0] - pointr2[0]
+            dy = pointr1[1] - pointr2[1]
             dist = np.sqrt(dx**2 + dy**2)
-            print('Distance in pixels on original = {0:2.2f}'.format(dist))
+            print('Distance in pixels on Raw = {0:2.2f}'.format(dist))
 
 def getMouseClicksUndistorted(event, x, y, flags, params):
     global pointd1
@@ -134,14 +134,14 @@ def getMouseClicksUndistorted(event, x, y, flags, params):
 
 def main(cap, multiplier, images, frameId):
     calibrated = False
-    cv.namedWindow('Original')
-    cv.setMouseCallback('Original', getMouseClicksOriginal)
+    cv.namedWindow('Raw')
+    cv.setMouseCallback('Raw', getMouseClicksRaw)
     while True:
         # current frame number, rounded b/c sometimes you get frame intervals which aren't integers...this adds a little imprecision but is likely good enough
         frameId += 1
         flag, image = cap.read()
         if flag:
-            cv.imshow('Original', image)
+            cv.imshow('Raw', image)
             if ((cv.waitKey(15) & 0xFF == ord('c')) and (len(images)>=5)):
                 print(CGREEN+"Starting calibration"+CEND)
                 camera_matrix, distortion_matrix = calibrate(list(images))
@@ -166,12 +166,21 @@ def main(cap, multiplier, images, frameId):
                     p1 = realDistanceCalculator(camera_matrix, extrinsics_matrix, pointd1[0],pointd1[1])
                     p2 = realDistanceCalculator(camera_matrix, extrinsics_matrix, pointd2[0], pointd2[1])
                     aux = p2 - p1
-                    print("test")
-                    print(aux)
+                    dist = np.sqrt(aux[0]**2 + aux[1]**2)
+                    pointd1.clear()
+                    pointd2.clear()
+                    print(
+                        CBOLD+CRED+'Size calculated on undistorted = {}'.format(dist)+CEND)
                 cv.imshow('undistorted', undistorted_image)
-            if(calibrated and pointo1 and pointo2):
-                cv.line(image, tuple(pointo1), tuple(
-                    pointo2), (255, 255, 255), 2)
+            if(calibrated and pointr1 and pointr2):
+                cv.line(image, tuple(pointr1), tuple(pointr2), (255, 255, 255), 2)
+                p1 = realDistanceCalculator(camera_matrix, extrinsics_matrix, pointr1[0], pointr1[1])
+                p2 = realDistanceCalculator(camera_matrix, extrinsics_matrix, pointr2[0], pointr2[1])
+                aux = p2 - p1
+                dist = np.sqrt(aux[0]**2 + aux[1]**2)
+                pointr1.clear()
+                pointr2.clear()
+                print(CBOLD+CRED+"Size calculated on raw = {}".format(dist)+CEND)
             if ((frameId % multiplier) == 0):
                 images.append(image)
                 print("image collected")

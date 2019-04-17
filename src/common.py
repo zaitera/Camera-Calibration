@@ -9,8 +9,8 @@ CBOLD = '\33[1m'
 CRED = '\33[31m'
 CGREEN = '\33[32m'
 CBLUE = '\33[34m'
-pointo1 = []
-pointo2 = []
+pointr1 = []
+pointr2 = []
 pointd1 = []
 pointd2 = []
 def init():
