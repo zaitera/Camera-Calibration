@@ -9,7 +9,7 @@ CBOLD = '\33[1m'
 CRED = '\33[31m'
 CGREEN = '\33[32m'
 CBLUE = '\33[34m'
-    
+
 def splitfn(fn):
     path, fn = os.path.split(fn)
     name, ext = os.path.splitext(fn)
@@ -38,6 +38,24 @@ def averageMatrixCaluclator(mat):
     avg_mat /= i
     del i,j
     return avg_mat
+
+
+def stdMatrixCaluclator(mat):
+    #mat = distortion or intrinsics
+    import glob
+    path = "./output/xmls/"+mat+"_*.xml"
+    i = 0
+    for filename in glob.glob(path):
+        i += 1
+    xmlfile = XmlFile(mat+"_1"".xml")
+    all_matrix = xmlfile.readFromXml('matrix')
+
+    for j in range(2, i+1):
+        filename = mat+"_"+str(j)+".xml"
+        xmlfile = XmlFile(filename)
+        all_matrix = np.dstack((all_matrix, xmlfile.readFromXml('matrix')))
+    del i, j
+    return np.std(all_matrix, 2, ddof=1)
 
 class XmlFile:
     Name = ""

@@ -13,6 +13,10 @@ def undistortImage(image, camera_matrix, dist_coefs):
         image, map1, map2, interpolation=cv.INTER_CUBIC)
     return image_corr_mine
 
+def getExtrinsics(camera_matrix, distortion_matrix):
+    
+    return rvec, tvec
+
 @static_vars(counter=0)
 def calibrate(images):
     square_size = 3.0
@@ -69,11 +73,21 @@ def calibrate(images):
     # undistort the image with the calibration
     print("RMS", rms)
     print('')
+    print("calculating extrinsics")
+
+    rvec = np.mean(np.array(rvecs),axis = 0)
+    tvec = np.mean(np.array(tvecs), axis=0)
+    rotation_matrix, __ = cv.Rodrigues(rvec)
+    extrinsics_matrix = np.concatenate(
+        [rotation_matrix, tvec], 1)
     xmlf = XmlFile("distortion_"+str(calibrate.counter)+".xml")
     xmlf.writeToXml('matrix', dist_coefs)
     del xmlf
     xmlf = XmlFile("intrinsics_"+str(calibrate.counter)+".xml")
     xmlf.writeToXml('matrix', camera_matrix)
+    del xmlf
+    xmlf = XmlFile("extrinsics_"+str(calibrate.counter)+".xml")
+    xmlf.writeToXml('matrix', extrinsics_matrix)
     del xmlf
     print('Done')
     return camera_matrix, dist_coefs
@@ -87,7 +101,7 @@ def init():
     cam_number = int(
         input("Enter the webcam camera number as your system identifies it: "), 10)
     cap = cv.VideoCapture(cam_number)
-    seconds = float(input("Enter the amount of time between the frames choosed for calibration: "))
+    seconds = float(input("Enter the amount of time between the frames choosed for calibration in seconds (accepts float values): "))
     fps = cap.get(cv.CAP_PROP_FPS)  # Gets the frames per second
     print(str(fps)+" FPS")
     multiplier = fps * seconds
@@ -116,14 +130,14 @@ def main(cap, multiplier, images, frameId):
                     calibrated = True
                     distortion_matrix = averageMatrixCaluclator("distortion")
                     camera_matrix = averageMatrixCaluclator("intrinsics")
-                    xmlf = XmlFile("distortion_avg"+".xml")
+                    xmlf = XmlFile("distortion_avg.xml")
                     xmlf.writeToXml('matrix', distortion_matrix)
                     del xmlf
-                    xmlf = XmlFile("intrinsics_avg"+".xml")
+                    xmlf = XmlFile("intrinsics_avg.xml")
                     xmlf.writeToXml('matrix', camera_matrix)
                     del xmlf
                 images.clear()
-            if (calibrated):
+            if (calibrated and frameId % 15 == 0): #update undistort image every 500ms (because camera is 30 fps)
                 undistored_image = undistortImage(image, camera_matrix, distortion_matrix)
                 cv.imshow('undistored', undistored_image)
             if ((frameId % multiplier) == 0):
