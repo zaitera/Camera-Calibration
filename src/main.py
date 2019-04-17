@@ -183,7 +183,8 @@ def main(cap, multiplier, images, frameId):
                 print(CBOLD+CRED+"Size calculated on raw = {}".format(dist)+CEND)
             if ((frameId % multiplier) == 0):
                 images.append(image)
-                print("image collected")
+                if(len(images)>=5):
+                    print("5 images collected successfully press c to calibrate.")
             # The frame is ready and already captured
         else:
             print("frame is not ready")
