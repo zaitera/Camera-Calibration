@@ -1,0 +1,76 @@
+Roteiro Projeto Demonstrativo 2 - Calibração de Câmeras
+Objetivo
+
+Esta atividade tem como objetivo principal avaliar os aspectos da calibração de câmeras, realizando o desenvolvimento de uma "régua visual".
+Material necessário
+
+    Uma câmera digital (podendo ser do computador portátil, webcam, smartphone ou mesmo externa).
+    Um objeto qualquer do qual uma de suas dimensões será medida (por exemplo, seu comprimento), tendo de preferência tendo entre 10 e 40cm de comprimento.
+    Uma trena para efetuar medições de até 2 metros.
+    Hardware, software e wetware capaz de implementar algoritmos de visão computacional.
+
+Procedimentos
+Requisito 1: medição de um segmento de reta na imagem
+
+Desenvolva uma aplicação que a partir da utilização de uma entrada (cliques de mouse), seja capaz de capturar a posição inicial [xi,yi] (primeiro clique) e a posição final [xf,yf] (segundo clique) e permita desenhar uma linha na tela.
+
+Sugestão: utilize uma função de chamada ao sistema pelo mouse do OpenCV, como feito para o PD1.
+
+Calcule o comprimento desta linha em pixels e imprima-o no console. O comprimento deverá ser dado pela distância Euclidiana bidimensional.
+Requisito 2: calibração de intrínsecos
+
+Realize a calibração de uma câmera digital, gerando os arquivos "XML" com os parâmetros intrínsecos e distorções provenientes do processo de calibração. Sugestão: utilize o padrão de calibração e use como ponto de partida o programa de calibração disponibilizado no tópico da atividade, porém, note que esse programa usa uma versão antiga da OpenCV e será necessário adaptá-lo caso sua versão não seja compatível. As saídas de vídeo nas janelas "raw" e "undistorted" dessa aplicação devem ser acopladas ao código da aplicação desenvolvida no Requisito 1, de forma que seja possível medir distâncias em pixels nessas duas janelas.
+Observações
+
+Para a calibração, capture pelo menos 5 imagens (spanspots), apresentando o padrão de tabuleiro de xadrez.
+Em cada snapshot, posicione o tabuleiro em várias posições de forma que a maioria das áreas visíveis da imagem seja explorada. Isto é de fundamental importância para que os parâmetros de distorção da câmera sejam estimados mais precisamente.
+Repita este procedimento pelo menos 5 (cinco) vezes. No programa disponibilizado, cada execução gera um XML separado. Para todos os parâmetros obtidos, tire a média e o desvio padrão para cada parâmetro da calibração obtido. Alternativamente, você pode calcular essas médias e desvios padrões internamente no seu programa.
+
+Atenção: para os próximos passos, utilize a média destes parâmetros obtidos, registrados em um novo arquivo XML tanto para a distorção (distortion.xml), quanto para os parâmetros intrínsecos (intrisics.xml).
+
+Dica importante: realize o processo de calibração em um ambiente com boa iluminação e fixe o padrão de calibração numa superfície planar rígida.
+Requisito 3: calibração de extrínsecos
+
+Meça, com uma boa régua, os retângulos do padrão de calibração impresso e use esse padrão para determinar o sistema de coordenadas do mundo (world coordinate frame).
+
+Armazene as coordenadas reais dos 48 pontos do padrão. Assuma que o sistema de coordenadas do mundo tenha a origem [0,0,0]T no primeiro ponto da página (i.e., primeira interseção entre quatro retângulos) e que o papel esteja alinhado com as coordenadas X e Y (ou seja, Z=0 para todos os pontos do padrão de calibração).
+
+Implemente um programa que use as medidas acima, bem como os dados de calibração obtidos para o requisito 2, para calcular os parâmetros extrínsecos da câmera.
+
+Repita esse processo de calibração de extrínsecos com o padrão de calibração situado a pelo menos 3 distâncias diferentes do centro da câmera:
+
+    dmin: o mais próximo possível, desde que todos os 48 pontos sejam visíveis,
+    dmax: o mais distante possível, desde que esses pontos possam ser capturados pelo algoritmo,
+    dmed: e numa distância intermediária.
+
+Ao realizar tais calibrações, meça com uma trena a distância entre o centro da câmera e a origem do padrão de calibração e use isso para avaliar os resultados de calibração obtidos, ou seja, verifique a similaridade entre essa distância e a norma do vetor de translação do mundo para a câmera |t|. Anote seus resultados e discuta o efeito da distância no calculo dos parâmetros de translação. Para cada posição acima (dmin, dmed e dmax), repita o processo pelo menos 3 vezes para poder calcular a média e o desvio padrão da distância entre a coordenada do mundo e a da câmera. Esse desvio padrão informa quão confiáveis são as estimativas.
+Requisito 4: régua visual
+
+Terminado o processo de calibração acima e utilizando a imagem de vídeo das saídas "raw" e "undistorted" definidas pela aplicação e algum objeto com dimensão (altura ou largura) conhecida faça, para cada posição (dmin, dmed e dmax) as seguintes operações:
+
+    Meça o objeto conhecido usando o procedimento do requisito 1 em ambas imagens (raw e undistorted).
+    Com cliques de mouse, você obterá medidas em pixels em ambas imagens. Usando os parâmetros de calibração obtidos, mapeie essas medidas para milímetros.
+    Anote os resultados obtidos (metidas, em metro) do objeto para cada distância (dmin, dmed e dmax), e também usando medidas feitas nas imagens raw e undistorted. Anote também o valor real do tamanho do objeto (conforme medido, por exemplo, com uma régua ou trena).
+    Execute o processo acima ao menos duas vezes para cada distância da câmera, adquirindo medições do objeto situado próximo ao centro da imagem e também próximo a uma das bordas da imagem.
+    Faça tabelas consolidadas (já utilizando os valores médios e desvio padrão, i.e., com formato X.XX±X.XX) com estes resultados, como indicado abaixo.
+
+ 	                
+Posição do padrão de calibração                    |dmin___|dmed___|dmax____|
+|t|, medida pela trena 	  	  	                   |       |       |        |
+|t|, calculada pela calibração extrínseca 	  	   |       |       |        |	 
+lraw,centre 	  	  	                           |       |       |        |
+lraw,perifery 	  	  	                           |       |       |        |
+lundistorted,centre 	  	  	                   |       |       |        |
+lundistorted,perifery 	  	  	                   |_______|_______|________|
+
+onde
+
+    t é o vetor de translação entre o centro da câmera e a origem do objeto de calibração e |t| é sua norma, ou seja, a distância entre a câmera e o objeto de calibração. Note que a transação t é a mesma coisa que o vertor X da posição do primeiro ponto do padrão de calibração, representado no sistema de coordenadas da câmera.
+    lraw,centre é o comprimento do objeto conhecido, em milímetros, conforme calculado a partir de cliques do mouse na imagem raw, para o objeto localizado próximo ao centro da imagem.
+    lraw,perifery é o comprimento (mm) do objeto, conforme calculado a partir de cliques do mouse na imagem raw, para o objeto localizado próximo à periferia (uma das bordas) da imagem.
+    lundistorted,centre é o comprimento (mm) do objeto, conforme calculado a partir da imagem undistorted, para o objeto localizado próximo ao centro da imagem.
+    lundistorted,perifery é o comprimento (mm) do objeto, conforme calculado a partir da imagem undistorted, para o objeto localizado próximo à periferia imagem.
+
+Requisito 5: análise
+
+Discuta os principais elementos causadores das variações das medições obtidas com a esperada (medida real do objeto avaliado). Avalie a característica do hardware da câmera e quais fatores podem ser os causadores destas possíveis diferenças. Proponha/discuta quais fatores podem ser melhorados/aprimorados para que esta medição seja feita com a maior precisão possível.
