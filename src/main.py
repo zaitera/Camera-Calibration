@@ -96,7 +96,14 @@ def realDistanceCalculator(camera_matrix,extrinsics,x,y):
     ans /= ans[-1] 
     return ans
 
-
+def distanceBetweenTwoPixels(pixel1,pixel2, intrinsics, extrinsics):
+    p1 = realDistanceCalculator(intrinsics, extrinsics, pixel1[0], pixel2[1])
+    p2 = realDistanceCalculator(intrinsics, extrinsics, pixel2[0], pixel2[1])
+    aux = p2 - p1
+    pixel1.clear()
+    pixel2.clear()
+    return aux
+    
 def getMouseClicksRaw(event, x, y, flags, params):
     global pointr1
     global pointr2
@@ -141,60 +148,60 @@ def main(cap, multiplier, images, frameId):
         frameId += 1
         flag, image = cap.read()
         if flag:
-            cv.imshow('Raw', image)
+            # The frame is ready and already captured
             if ((cv.waitKey(15) & 0xFF == ord('c')) and (len(images)>=5)):
                 print(CGREEN+"Starting calibration"+CEND)
-                camera_matrix, distortion_matrix = calibrate(list(images))
+                camera_matrix, distortion_matrix = calibrate(images)
+                images.clear()
                 if(calibrate.counter >= 5):
                     calibrate.counter = 0
                     calibrated = True
                     cv.namedWindow('undistorted')
-                    cv.setMouseCallback(
-                        'undistorted', getMouseClicksUndistorted)
-                    distortion_matrix = averageMatrixCaluclator("distortion")
-                    camera_matrix = averageMatrixCaluclator("intrinsics")
-                    extrinsics_matrix = averageMatrixCaluclator("extrinsics")
-                    writeXmlsAvgs(distortion_matrix,
-                                  camera_matrix, extrinsics_matrix)
-                    writeXmlStds()
-                images.clear()
+                    cv.setMouseCallback('undistorted', getMouseClicksUndistorted)
+                    # method is called so that the loop structure gets easier to understand
+                    camera_matrix, extrinsics_matrix, distortion_matrix = matricesPreparation()
+                    pass
+                pass
             if (calibrated and frameId % 15 == 0): #update undistort image every 500ms (because camera is 30 fps)
                 undistorted_image = undistortImage(image, camera_matrix, distortion_matrix)
-                if pointd1 and pointd2 :
-                    cv.line(undistorted_image, tuple(pointd1),
-                            tuple(pointd2), (255, 255, 255), 2)
-                    p1 = realDistanceCalculator(camera_matrix, extrinsics_matrix, pointd1[0],pointd1[1])
-                    p2 = realDistanceCalculator(camera_matrix, extrinsics_matrix, pointd2[0], pointd2[1])
-                    aux = p2 - p1
-                    dist = np.sqrt(aux[0]**2 + aux[1]**2)
-                    pointd1.clear()
-                    pointd2.clear()
-                    print(
-                        CBOLD+CRED+'Size calculated on undistorted = {}'.format(dist)+CEND)
                 cv.imshow('undistorted', undistorted_image)
+                if pointd1 and pointd2 :
+                    cv.line(undistorted_image, tuple(pointd1),tuple(pointd2), (0, 0, 255), 2)
+                    cv.imshow('undistorted', undistorted_image)
+                    aux = distanceBetweenTwoPixels(pointd1, pointd2,camera_matrix,extrinsics_matrix)
+                    dist = np.sqrt(aux[0]**2 + aux[1]**2)
+                    print(CBOLD+CRED+'Size calculated on undistorted = {}'.format(dist)+CEND)
+                    cv.waitKey(1000) #holding distance value on the screen so that it can be noticed
+                    pass
+                pass
             if(calibrated and pointr1 and pointr2):
-                cv.line(image, tuple(pointr1), tuple(pointr2), (255, 255, 255), 2)
-                p1 = realDistanceCalculator(camera_matrix, extrinsics_matrix, pointr1[0], pointr1[1])
-                p2 = realDistanceCalculator(camera_matrix, extrinsics_matrix, pointr2[0], pointr2[1])
-                aux = p2 - p1
+                cv.line(image, tuple(pointr1), tuple(pointr2), (255, 0, 0), 2)
+                cv.imshow('Raw', image)
+                aux = distanceBetweenTwoPixels(pointr1,pointr2,camera_matrix,extrinsics_matrix)
                 dist = np.sqrt(aux[0]**2 + aux[1]**2)
-                pointr1.clear()
-                pointr2.clear()
                 print(CBOLD+CBLUE+"Size calculated on raw = {}".format(dist)+CEND)
+                cv.waitKey(1000) #holding distance value on the screen so that it can be noticed
+                pass
             if ((frameId % multiplier) == 0):
                 images.append(image)
-                print("image collected - ", sep=' ', end='', flush=True)
                 if(len(images)>=5):
                     print("")
                     print("5 images are available press c to calibrate.")
-            # The frame is ready and already captured
+                    pass
+                else:
+                    print("image collected - ", sep=' ', end='', flush=True)
+                    pass
+            cv.imshow('Raw', image)
+            pass
         else:
             print("frame is not ready")
             # It is better 1to wait for a while for the next frame to be ready
             cv.waitKey(10)
+            pass
         if cv.waitKey(15) == 27:
             cap.release()
             break
+        pass
 
 if __name__ == '__main__':
     main(*init())

@@ -13,6 +13,7 @@ pointr1 = []
 pointr2 = []
 pointd1 = []
 pointd2 = []
+
 def init():
     print('''Hi, Usage:
         - after collecting at least 5 images, you can click the character c to initialize the calibration process for that dataset.
@@ -46,6 +47,14 @@ def static_vars(**kwargs):
             setattr(func, k, kwargs[k])
         return func
     return decorate
+
+def matricesPreparation():
+    distortion_matrix = averageMatrixCaluclator("distortion")
+    camera_matrix = averageMatrixCaluclator("intrinsics")
+    extrinsics_matrix = averageMatrixCaluclator("extrinsics")
+    writeXmlsAvgs(distortion_matrix, camera_matrix, extrinsics_matrix)
+    writeXmlStds()
+    return camera_matrix, extrinsics_matrix, distortion_matrix
 
 def averageMatrixCaluclator(mat):
     #mat = distortion or intrinsics
