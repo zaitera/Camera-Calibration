@@ -1,5 +1,5 @@
 # Camera-Calibration
->├── README.md (Este arquivo)  
+>├── README.md (This file)  
 ├── /Docs  
 │ └── Abdullah_Zaiter__Ian_Moura.pdf report in portuguese  
 │ └── Latex source code of the report  
