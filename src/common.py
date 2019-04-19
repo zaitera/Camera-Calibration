@@ -14,6 +14,8 @@ pointr2 = []
 pointd1 = []
 pointd2 = []
 
+mode__ = str()
+
 def init():
     print('''Hi, Usage:
         - after collecting at least 5 images, you can click the character c to initialize the calibration process for that dataset.
@@ -25,6 +27,11 @@ def init():
     cap = cv.VideoCapture(cam_number)
     seconds = float(input(
         "Enter the amount of time between the frames choosed for calibration in seconds (accepts float values): "))
+    aux = input("To use solvePNP for extrinsics press (1) for normal method click anykey: ")
+    if aux == "1":
+        mode__ = "solvePNP"
+        print("Setting mode to solvePNP")
+        pass
     fps = cap.get(cv.CAP_PROP_FPS)  # Gets the frames per second
     print(str(fps)+" FPS")
     multiplier = fps * seconds

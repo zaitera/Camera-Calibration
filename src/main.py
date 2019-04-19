@@ -69,9 +69,13 @@ def calibrate(images):
     print("RMS", rms)
     print('')
     print("Calculating extrinsics")
-
-    rvec = np.mean(np.array(rvecs),axis = 0)
-    tvec = np.mean(np.array(tvecs), axis=0)
+    if(mode__ == "solvePNP"):
+        ret, rvec, tvec = cv.solvePnP(
+            obj_points[0], img_points[0], camera_matrix, dist_coefs)
+        pass
+    else:
+        rvec = np.mean(np.array(rvecs),axis = 0)
+        tvec = np.mean(np.array(tvecs), axis=0)
     rotation_matrix, __ = cv.Rodrigues(rvec)
     extrinsics_matrix = np.concatenate(
         [rotation_matrix, tvec], 1)
